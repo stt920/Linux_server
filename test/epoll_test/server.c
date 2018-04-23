@@ -15,8 +15,8 @@
 #define 	PORT			7777
 #define	MAXBACK	1000
 
-//!> 设置非阻塞
-//!> 
+//设置非阻塞
+//
 int setnonblocking( int fd )
 {
 	if( fcntl( fd, F_SETFL, fcntl( fd, F_GETFD, 0 )|O_NONBLOCK ) == -1 )
@@ -33,20 +33,20 @@ int main( int argc, char ** argv )
 	int 		conn_fd;
 	int 		epoll_fd;
 	int 		nread;
-	int 		cur_fds;				//!> 当前已经存在的数量
-	int 		wait_fds;				//!> epoll_wait 的返回值
+	int 		cur_fds;				//当前已经存在的数量
+	int 		wait_fds;				//epoll_wait 的返回值
 	int		i;
 	struct sockaddr_in servaddr;
 	struct sockaddr_in cliaddr;
 	struct 	epoll_event	ev;
 	struct 	epoll_event	evs[MAXEPOLL];
-	struct 	rlimit	rlt;		//!> 设置连接数所需
+	struct 	rlimit	rlt;		// 设置连接数所需
 	char 	buf[MAXLINE];
 	socklen_t	len = sizeof( struct sockaddr_in );
 
-	//!> 设置每个进程允许打开的最大文件数
-	//!> 每个主机是不一样的哦，一般服务器应该很大吧！
-	//!> 
+	// 设置每个进程允许打开的最大文件数
+	// 每个主机是不一样的哦，一般服务器应该很大吧！
+	// 
 	rlt.rlim_max = rlt.rlim_cur = MAXEPOLL;
 	if( setrlimit( RLIMIT_NOFILE, &rlt ) == -1 )	
 	{
@@ -54,49 +54,49 @@ int main( int argc, char ** argv )
 		exit( EXIT_FAILURE );
 	}
 	
-	//!> server 套接口
-	//!> 
+	// server 套接口
+	// 
 	bzero( &servaddr, sizeof( servaddr ) );
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = htonl( INADDR_ANY );
 	servaddr.sin_port = htons( PORT );
 	
-	//!> 建立套接字
+	//建立套接字
 	if( ( listen_fd = socket( AF_INET, SOCK_STREAM, 0 ) ) == -1 )
 	{
 		printf("Socket Error...\n" , errno );
 		exit( EXIT_FAILURE );
 	}
 	
-	//!> 设置非阻塞模式
-	//!> 
+	// 设置非阻塞模式
+	//
 	if( setnonblocking( listen_fd ) == -1 )
 	{
 		printf("Setnonblocking Error : %d\n", errno);
 		exit( EXIT_FAILURE );
 	}
 	
-	//!> 绑定
-	//!>
+	// 绑定
+	//
 	if( bind( listen_fd, ( struct sockaddr *)&servaddr, sizeof( struct sockaddr ) ) == -1 )
 	{
 		printf("Bind Error : %d\n", errno);
 		exit( EXIT_FAILURE );
 	}
 
-	//!> 监听
-	//!> 
+	// 监听
+	
 	if( listen( listen_fd, MAXBACK ) == -1 )
 	{
 		printf("Listen Error : %d\n", errno);
 		exit( EXIT_FAILURE );
 	}
 	
-	//!> 创建epoll
-	//!> 
-	epoll_fd = epoll_create( MAXEPOLL );	//!> create
-	ev.events = EPOLLIN | EPOLLET;		//!> accept Read!
-	ev.data.fd = listen_fd;					//!> 将listen_fd 加入
+	// 创建epoll
+	// 
+	epoll_fd = epoll_create( MAXEPOLL );	// create
+	ev.events = EPOLLIN | EPOLLET;		// accept Read!
+	ev.data.fd = listen_fd;					// 将listen_fd 加入
 	if( epoll_ctl( epoll_fd, EPOLL_CTL_ADD, listen_fd, &ev ) < 0 )
 	{
 		printf("Epoll Error : %d\n", errno);
